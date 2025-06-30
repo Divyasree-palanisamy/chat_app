@@ -10,6 +10,7 @@ function App() {
   const [username, setUsername] = useState('');
   const [tempUsername, setTempUsername] = useState('');
   const [showUsernameModal, setShowUsernameModal] = useState(true);
+  const [users, setUsers] = useState([]); // ✅ Track online users
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -17,8 +18,13 @@ function App() {
       setMessages((prev) => [...prev, data]);
     });
 
+    socket.on('user list', (userList) => {
+      setUsers(userList); // ✅ Update online users list
+    });
+
     return () => {
       socket.off('chat message');
+      socket.off('user list');
     };
   }, []);
 
@@ -30,6 +36,7 @@ function App() {
     const nameToSet = tempUsername.trim() || 'Anonymous';
     setUsername(nameToSet);
     setShowUsernameModal(false);
+    socket.emit('user joined', nameToSet); // ✅ Send username to backend
   };
 
   const send = () => {
@@ -62,7 +69,17 @@ function App() {
         <h1>💬 MULTIPLE USER CHAT APPLICATION</h1>
       </div>
 
-      <ul>
+      {/* ✅ Online users list */}
+      <div className="user-list">
+        <h3>👥 Online Users</h3>
+        <ul>
+          {users.map((user, idx) => (
+            <li key={idx}>🟢 {user}</li>
+          ))}
+        </ul>
+      </div>
+
+      <ul className="chat-messages">
         {messages.map((msg, idx) => (
           <li key={idx}><strong>{msg.user}:</strong> {msg.text}</li>
         ))}
